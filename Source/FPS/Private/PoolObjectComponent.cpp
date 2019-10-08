@@ -61,3 +61,16 @@ AFPSProjectile* UPoolObjectComponent::GetPoolObject()
 
 	return nullptr;
 }
+
+void UPoolObjectComponent::ClearPool()
+{
+	if (Pool.Num() == 0)
+		return;
+
+	for (int i = 0; i < poolSize; ++i)
+	{
+		Pool[i]->Destroy();
+		Pool[i] = nullptr;
+	}
+	Pool.Empty();
+}

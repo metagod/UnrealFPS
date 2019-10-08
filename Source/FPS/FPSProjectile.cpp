@@ -16,6 +16,7 @@ AFPSProjectile::AFPSProjectile()
 	CollisionComp->SetWalkableSlopeOverride(FWalkableSlopeOverride(WalkableSlope_Unwalkable, 0.f));
 	CollisionComp->CanCharacterStepUpOn = ECB_No;
 	
+	
 	// Set as root component
 	RootComponent = CollisionComp;
 
@@ -26,7 +27,6 @@ AFPSProjectile::AFPSProjectile()
 	//ProjectileMovement->MaxSpeed = 3000.f;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = true;
-
 }
 
 void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -36,7 +36,7 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
 
-		Destroy();
+		SetActive(false);
 	}
 }
 
@@ -54,6 +54,11 @@ void AFPSProjectile::ChangeLifeSpan(float _timeInSeconds)
 {
 	InitialLifeSpan = _timeInSeconds;
 	SetLifeSpan(_timeInSeconds);
+}
+
+void AFPSProjectile::SetInactiveTimer(float time)
+{
+	GetWorld()->GetTimerManager().SetTimer(TimeToLive, this, &AFPSProjectile::OnTimerOver, time, false);
 }
 
 void AFPSProjectile::ToggleSniperMode(bool _toggleState)
@@ -76,9 +81,21 @@ void AFPSProjectile::SetActive(bool toggle)
 {
 	isActive = toggle;
 	SetActorHiddenInGame(!toggle);
+	toggle ? ProjectileMovement->Activate() : ProjectileMovement->Deactivate();
+}
+
+void AFPSProjectile::OnFire()
+{
+	if (isActive)
+		ProjectileMovement->Velocity = this->GetActorForwardVector() * ProjectileMovement->InitialSpeed;
 }
 
 bool AFPSProjectile::IsActorActive()
 {
 	return isActive;
+}
+
+void AFPSProjectile::OnTimerOver()
+{
+	SetActive(false);
 }

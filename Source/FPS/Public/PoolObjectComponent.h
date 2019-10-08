@@ -39,4 +39,5 @@ public:
 
 	AFPSProjectile* GetPoolObject();
 
+	void ClearPool();
 };

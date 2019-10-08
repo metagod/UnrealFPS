@@ -17,6 +17,8 @@ class AFPSProjectile : public AActor
 	class UProjectileMovementComponent* ProjectileMovement;
 
 	bool isActive = false;
+protected:
+	FTimerHandle TimeToLive;
 
 public:
 	AFPSProjectile();
@@ -39,5 +41,8 @@ public:
 	void ChangeLifeSpan(float _timeInSeconds);
 	void SetActive(bool toggle);
 	bool IsActorActive();
+	void SetInactiveTimer(float time);
+	void OnTimerOver();
+	void OnFire();
 };
 

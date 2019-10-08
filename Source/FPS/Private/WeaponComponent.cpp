@@ -6,6 +6,8 @@
 #include "WeaponData.h"
 #include "PoolObjectComponent.h"
 #include "../Public/WeaponComponent.h"
+#include <EngineGlobals.h>
+#include <Runtime/Engine/Classes/Engine/Engine.h>
 
 // Sets default values for this component's properties
 UWeaponComponent::UWeaponComponent()
@@ -28,6 +30,7 @@ void UWeaponComponent::BeginPlay()
 	ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
 	if (ammoPool != nullptr)
 	{
+		ammoPool->ClearPool();
 		ammoPool->SetPoolType(ProjectileClass);
 		ammoPool->SetPool();
 	}// ...
@@ -94,7 +97,7 @@ void UWeaponComponent::FireOnTime()
 		SpawnHitScan();
 	}
 
-	if (FiredCount > 0)
+	if (FiredCount > 1)
 	{
 		--FiredCount;
 		--AmmoConsumed;
@@ -129,8 +132,12 @@ void UWeaponComponent::SpawnFromPool()
 		_spawndProj->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		_spawndProj->SetActorLocation(SpawnLocation);
 		_spawndProj->SetActorRotation(SpawnRotation);
+		_spawndProj->SetInactiveTimer(3);
 		_spawndProj->SetActive(true);
+		_spawndProj->OnFire();
 	}
+	else
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("This is an on screen message!"));
 }
 
 void UWeaponComponent::SpawnProjs()
