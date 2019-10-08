@@ -19,12 +19,23 @@ UPoolObjectComponent::UPoolObjectComponent()
 void UPoolObjectComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
+}
+
+void UPoolObjectComponent::SetPoolType(TSubclassOf<class AFPSProjectile> prefab)
+{
+	PooledObjectSubClass = prefab;
+}
+
+void UPoolObjectComponent::SetPool()
+{
 	UWorld* world = GetWorld();
 	if (world)
 	{
 		for (int i = 0; i < poolSize; ++i)
 		{
 			AFPSProjectile* poolEntry = world->SpawnActor<AFPSProjectile>(PooledObjectSubClass, FVector().ZeroVector, FRotator().ZeroRotator);
+			poolEntry->ChangeLifeSpan(0.f);
 			poolEntry->SetActive(false);
 			Pool.Add(poolEntry);
 		}

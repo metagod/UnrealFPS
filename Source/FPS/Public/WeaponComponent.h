@@ -71,8 +71,10 @@ protected:
 
 	class AFPSCharacter* MyCharacter;
 	class UWorld* World;
-	
+	class UPoolObjectComponent* ammoPool;
+
 	void SpawnProjs();
+	void SpawnFromPool();
 	void SpawnHitScan();
 	void ResetFireTimer();
 	void ReloadComplete();

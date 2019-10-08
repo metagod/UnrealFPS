@@ -21,10 +21,10 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere, Catgory = "ObjectPooler")
+	UPROPERTY(EditAnywhere, Category = "ObjectPooler")
 		TSubclassOf<class AFPSProjectile> PooledObjectSubClass;
 
-	UPROPERTY(EditAnywhere, Catgory = "ObjectPooler")
+	UPROPERTY(EditAnywhere, Category = "ObjectPooler")
 		int poolSize;
 
 	TArray<AFPSProjectile*> Pool;
@@ -32,6 +32,10 @@ private:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void SetPool();
+
+	void SetPoolType(TSubclassOf<class AFPSProjectile> prefab);
 
 	AFPSProjectile* GetPoolObject();
 

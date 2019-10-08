@@ -4,6 +4,7 @@
 #include "FPSCharacter.h"
 #include "FPSProjectile.h"
 #include "WeaponData.h"
+#include "PoolObjectComponent.h"
 #include "../Public/WeaponComponent.h"
 
 // Sets default values for this component's properties
@@ -24,7 +25,12 @@ void UWeaponComponent::BeginPlay()
 	Super::BeginPlay();
 	bIsFiringOnTrigger = true;
 	CurrState = READY;
-	// ...
+	ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
+	if (ammoPool != nullptr)
+	{
+		ammoPool->SetPoolType(ProjectileClass);
+		ammoPool->SetPool();
+	}// ...
 	
 }
 
@@ -107,8 +113,34 @@ void UWeaponComponent::FireOnTime()
 
 }
 
+void UWeaponComponent::SpawnFromPool()
+{
+	float _randomFloatX = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
+	float _randomFloatY = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
+
+	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
+	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+
+	AFPSProjectile* _spawndProj = ammoPool->GetPoolObject();
+	if (_spawndProj != nullptr)
+	{
+		_spawndProj->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		_spawndProj->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		_spawndProj->SetActorLocation(SpawnLocation);
+		_spawndProj->SetActorRotation(SpawnRotation);
+		_spawndProj->SetActive(true);
+	}
+}
+
 void UWeaponComponent::SpawnProjs()
 {
+	if (ammoPool != nullptr)
+	{
+		SpawnFromPool();
+		return;
+	}
+
 	if (World == NULL)
 		World = GetWorld();
 
@@ -150,7 +182,7 @@ void UWeaponComponent::SpawnHitScan()
 		const FVector SpawnRange = SpawnLocation + SpawnDirection * WeaponDataRef.GetDefaultObject()->HitScanRange;
 		FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, MyCharacter);
 		TraceParams.bReturnPhysicalMaterial = true;
-		TraceParams.bTraceAsyncScene = true;
+		//TraceParams.bTraceAsyncScene = true;
 		FHitResult _out (ForceInit);
 		
 		World->LineTraceSingleByChannel(_out, SpawnLocation, SpawnRange, ECollisionChannel::ECC_WorldDynamic, TraceParams);
