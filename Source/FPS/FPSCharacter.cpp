@@ -161,7 +161,20 @@ void AFPSCharacter::OnFire()
 			{
 				if (NULL != WeaponComponent)
 				{
-					WeaponComponent->OnPrimaryFire();
+					// try and play a firing animation if specified
+					if (FireAnimation != NULL)
+					{
+						// Get the animation object for the arms mesh
+						UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+						if (AnimInstance != NULL)
+						{
+							if (WeaponComponent->CanFire())
+							{
+								AnimInstance->Montage_Play(FireAnimation, 1.f);
+								WeaponComponent->OnPrimaryFire();
+							}
+						}
+					}
 				}
 				else
 				{
@@ -191,16 +204,7 @@ void AFPSCharacter::OnFire()
 		//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
 	}
 
-	// try and play a firing animation if specified
-	if (FireAnimation != NULL)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
-	}
+	
 }
 
 void AFPSCharacter::OnSecondaryHold()

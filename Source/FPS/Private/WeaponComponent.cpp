@@ -6,8 +6,6 @@
 #include "WeaponData.h"
 #include "PoolObjectComponent.h"
 #include "../Public/WeaponComponent.h"
-#include <EngineGlobals.h>
-#include <Runtime/Engine/Classes/Engine/Engine.h>
 
 // Sets default values for this component's properties
 UWeaponComponent::UWeaponComponent()
@@ -25,13 +23,12 @@ UWeaponComponent::UWeaponComponent()
 void UWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	bIsFiringOnTrigger = true;
 	CurrState = READY;
 	ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
 	if (ammoPool != nullptr)
 	{
 		ammoPool->ClearPool();
-		ammoPool->SetPoolType(ProjectileClass);
+		ammoPool->SetPoolType(PrimaryProjectileClass);
 		ammoPool->SetPool();
 	}// ...
 	
@@ -54,23 +51,24 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 	{
 		MyCharacter = _ref;
 		FP_MuzzleLocation = MyCharacter->GetMuzzleComponent();
+		SetPrimaryProperties();
 	}
 }
 
 void UWeaponComponent::ResetFireTimer()
 {
-	bIsFiringOnTrigger = true;
+	CurrState = READY;
 }
 
 void UWeaponComponent::OnPrimaryFire()
 {
-	if (bIsFiring || !bIsFiringOnTrigger)
+	if (!CanFire())
 		return;
 
 	if (WeaponDataRef.GetDefaultObject()->BurstRate > 0)
 		bIsFiring = true;
 	
-	bIsFiringOnTrigger = false;
+	CurrState = FIRING;
 
 	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, WeaponDataRef.GetDefaultObject()->RateOfFire, false);
 
@@ -87,7 +85,7 @@ void UWeaponComponent::OnSecondaryFire()
 void UWeaponComponent::FireOnTime()
 {
 	// try and fire a projectile
-	if (!WeaponDataRef.GetDefaultObject()->bIsHitScan && ProjectileClass != NULL)
+	if (!WeaponDataRef.GetDefaultObject()->bIsHitScan && PrimaryProjectileClass != NULL)
 	{
 		// spawn the projectile at the muzzle TODO : Implement Pooling
 		SpawnProjs();
@@ -128,6 +126,8 @@ void UWeaponComponent::SpawnFromPool()
 	AFPSProjectile* _spawndProj = ammoPool->GetPoolObject();
 	if (_spawndProj != nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Can't Spawned"));
+
 		_spawndProj->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		_spawndProj->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		_spawndProj->SetActorLocation(SpawnLocation);
@@ -136,8 +136,6 @@ void UWeaponComponent::SpawnFromPool()
 		_spawndProj->SetActive(true);
 		_spawndProj->OnFire();
 	}
-	else
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("This is an on screen message!"));
 }
 
 void UWeaponComponent::SpawnProjs()
@@ -160,12 +158,12 @@ void UWeaponComponent::SpawnProjs()
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
-		ProjectileClass.GetDefaultObject()->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-		ProjectileClass.GetDefaultObject()->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		PrimaryProjectileClass.GetDefaultObject()->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		PrimaryProjectileClass.GetDefaultObject()->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		//Set Spawn Collision Handling Override
 		FActorSpawnParameters ActorSpawnParams;
 		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		ActorSpawnParams.Template = ProjectileClass.GetDefaultObject();
+		ActorSpawnParams.Template = PrimaryProjectileClass.GetDefaultObject();
 
 		AFPSProjectile* _spawndProj = World->SpawnActor<AFPSProjectile>(ActorSpawnParams.Template->GetClass(), SpawnLocation, SpawnRotation, ActorSpawnParams);
 		if (_spawndProj->LifeSpan > 0)
@@ -215,3 +213,28 @@ void UWeaponComponent::ReloadComplete()
 	AmmoConsumed = WeaponDataRef.GetDefaultObject()->ClipSize;
 }
 
+bool UWeaponComponent::CanFire()
+{
+	return !bIsFiring && CurrState == READY;
+}
+
+void UWeaponComponent::SetSecondaryProperties_Implementation()
+{}
+
+void UWeaponComponent::SetPrimaryProperties_Implementation()
+{}
+
+
+void UWeaponComponent::ChangeWeaponMode(eWeaponMode weaponMode)
+{
+	if (CurrMode != weaponMode)
+	{
+		switch (weaponMode)
+		{
+		case eWeaponMode::PRIMARY: SetPrimaryProperties(); break;
+		case eWeaponMode::SECONDARY: SetSecondaryProperties(); break;
+			default:
+				break;
+		}
+	}
+}

@@ -26,6 +26,14 @@ public:
 
 		None = 999
 	};
+
+	enum eWeaponMode
+	{
+		PRIMARY,
+		SECONDARY,
+
+		NONE = 99
+	};
 	
 	// Sets default values for this component's properties
 	UWeaponComponent();
@@ -52,7 +60,11 @@ public:
 
 	/** Projectile class to spawn */
 	UPROPERTY(EditAnywhere, Category = Projectile)
-	TSubclassOf<class AFPSProjectile> ProjectileClass;
+	TSubclassOf<class AFPSProjectile> PrimaryProjectileClass;
+
+	/** Projectile class to spawn */
+	UPROPERTY(EditAnywhere, Category = Projectile)
+	TSubclassOf<class AFPSProjectile> SecondaryProjectileClass;
 
 	/*Wepaon Data to modify the behaviour*/
 	UPROPERTY(EditAnywhere, Category = Weapon)
@@ -62,12 +74,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FVector GunOffset;
 
+	virtual bool CanFire();
+	virtual void ChangeWeaponMode(eWeaponMode weaponMode);
+
 protected:
 	FTimerHandle BurstTimeHandle;
 	FTimerHandle RoFTimeHandle;
 	FTimerHandle ReloadTimer;
 
 	eWeaponStates CurrState;
+	eWeaponMode	CurrMode;
 
 	class AFPSCharacter* MyCharacter;
 	class UWorld* World;
@@ -78,7 +94,13 @@ protected:
 	void SpawnHitScan();
 	void ResetFireTimer();
 	void ReloadComplete();
-
 	bool bIsFiring;
-	bool bIsFiringOnTrigger;
+
+	UFUNCTION(BluePrintNativeEvent, Category = Weapon)
+	void SetPrimaryProperties();	//Set as soon as weapon is equipped
+	UFUNCTION(BluePrintNativeEvent, Category = Weapon)
+	void SetSecondaryProperties();	//Set as soon as secondary feature is weaopon is activated
+
+	void SetPrimaryProperties_Implementation();
+	void SetSecondaryProperties_Implementation();
 };
