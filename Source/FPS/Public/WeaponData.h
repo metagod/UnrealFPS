@@ -80,5 +80,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float FOVChangeSecondary;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Secondary)
+	bool bIsSecondary;
 
+	/** Projectile class to spawn */
+	UPROPERTY(EditAnywhere, Category = Projectile)
+	TSubclassOf<class AFPSProjectile> ProjectileClass;
 };

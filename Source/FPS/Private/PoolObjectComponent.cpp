@@ -22,26 +22,42 @@ void UPoolObjectComponent::BeginPlay()
 	
 }
 
-void UPoolObjectComponent::SetPoolType(TSubclassOf<class AFPSProjectile> prefab)
+void UPoolObjectComponent::CreateComplexPool(TSubclassOf<class AFPSProjectile> prefab)
 {
-	PooledObjectSubClass = prefab;
-}
+	check(prefab != NULL)
 
-void UPoolObjectComponent::SetPool()
-{
-	UWorld* world = GetWorld();
-	if (world)
+	if (!complexPool.Contains(prefab))
 	{
-		for (int i = 0; i < poolSize; ++i)
+		TArray<AFPSProjectile*> complexArray; 
+
+		UWorld* world = GetWorld();
+		if (world)
 		{
-			AFPSProjectile* poolEntry = world->SpawnActor<AFPSProjectile>(PooledObjectSubClass, FVector().ZeroVector, FRotator().ZeroRotator);
-			poolEntry->ChangeLifeSpan(0.f);
-			poolEntry->SetActive(false);
-			Pool.Add(poolEntry);
+			for (int i = 0; i < poolSize; ++i)
+			{
+				AFPSProjectile* poolEntry = world->SpawnActor<AFPSProjectile>(prefab, FVector().ZeroVector, FRotator().ZeroRotator);
+				poolEntry->ChangeLifeSpan(0.f);
+				poolEntry->SetActive(false);
+				complexArray.Add(poolEntry);
+			}
 		}
+
+		complexPool.Add(prefab, complexArray);
 	}
 }
 
+AFPSProjectile* UPoolObjectComponent::GetPoolObjectOfType(TSubclassOf<class AFPSProjectile> prefab)
+{
+	check(complexPool.Contains(prefab));
+
+	for (AFPSProjectile* projectile : complexPool[prefab])
+	{
+		if (!projectile->IsActorActive())
+			return projectile;
+	}
+
+	return nullptr;
+}
 
 // Called every frame
 void UPoolObjectComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -51,26 +67,20 @@ void UPoolObjectComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	// ...
 }
 
-AFPSProjectile* UPoolObjectComponent::GetPoolObject()
-{
-	for (AFPSProjectile* projectile : Pool)
-	{
-		if (!projectile->IsActorActive())
-			return projectile;
-	}
-
-	return nullptr;
-}
 
 void UPoolObjectComponent::ClearPool()
 {
-	if (Pool.Num() == 0)
+	if (complexPool.Num() == 0)
 		return;
 
-	for (int i = 0; i < poolSize; ++i)
+	for (auto& pool : complexPool)
 	{
-		Pool[i]->Destroy();
-		Pool[i] = nullptr;
+		for (int i = 0; i < poolSize; ++i)
+		{
+			pool.Value[i]->Destroy();
+			pool.Value[i] = nullptr;
+		}
 	}
-	Pool.Empty();
+
+	complexPool.Empty();
 }

@@ -58,18 +58,13 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	class USceneComponent* FP_MuzzleLocation;
 
-	/** Projectile class to spawn */
-	UPROPERTY(EditAnywhere, Category = Projectile)
-	TSubclassOf<class AFPSProjectile> PrimaryProjectileClass;
-
-	/** Projectile class to spawn */
-	UPROPERTY(EditAnywhere, Category = Projectile)
-	TSubclassOf<class AFPSProjectile> SecondaryProjectileClass;
-
 	/*Wepaon Data to modify the behaviour*/
 	UPROPERTY(EditAnywhere, Category = Weapon)
-	TSubclassOf <class AWeaponData> WeaponDataRef;
+	TSubclassOf <class AWeaponData> PrimaryWeaponDataRef;
 	
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	TSubclassOf <class AWeaponData> SecondaryWeaponDataRef;
+
 	/** Gun muzzle's offset from the characters location */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FVector GunOffset;
@@ -90,7 +85,7 @@ protected:
 	class UPoolObjectComponent* ammoPool;
 
 	void SpawnProjs();
-	void SpawnFromPool();
+	void SpawnFromPool(TSubclassOf<class AFPSProjectile> projectileType);
 	void SpawnHitScan();
 	void ResetFireTimer();
 	void ReloadComplete();

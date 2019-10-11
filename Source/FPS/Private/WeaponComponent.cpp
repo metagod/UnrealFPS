@@ -23,14 +23,6 @@ UWeaponComponent::UWeaponComponent()
 void UWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrState = READY;
-	ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
-	if (ammoPool != nullptr)
-	{
-		ammoPool->ClearPool();
-		ammoPool->SetPoolType(PrimaryProjectileClass);
-		ammoPool->SetPool();
-	}// ...
 	
 }
 
@@ -40,8 +32,6 @@ void UWeaponComponent::TickComponent( float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
-
-
 	// ...
 }
 
@@ -50,6 +40,19 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 	if (NULL != _ref)
 	{
 		MyCharacter = _ref;
+
+		CurrState = READY;
+		
+		ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
+		
+		if (ammoPool != nullptr)
+		{
+			ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
+			if (SecondaryWeaponDataRef != NULL)
+				ammoPool->CreateComplexPool(SecondaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
+		}
+
+
 		FP_MuzzleLocation = MyCharacter->GetMuzzleComponent();
 		SetPrimaryProperties();
 	}
@@ -65,14 +68,14 @@ void UWeaponComponent::OnPrimaryFire()
 	if (!CanFire())
 		return;
 
-	if (WeaponDataRef.GetDefaultObject()->BurstRate > 0)
+	if (PrimaryWeaponDataRef.GetDefaultObject()->BurstRate > 0)
 		bIsFiring = true;
 	
 	CurrState = FIRING;
 
-	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, WeaponDataRef.GetDefaultObject()->RateOfFire, false);
+	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, PrimaryWeaponDataRef.GetDefaultObject()->RateOfFire, false);
 
-	FiredCount = WeaponDataRef.GetDefaultObject()->BurstAmount;
+	FiredCount = PrimaryWeaponDataRef.GetDefaultObject()->BurstAmount;
 	FireOnTime();
 }
 
@@ -85,7 +88,7 @@ void UWeaponComponent::OnSecondaryFire()
 void UWeaponComponent::FireOnTime()
 {
 	// try and fire a projectile
-	if (!WeaponDataRef.GetDefaultObject()->bIsHitScan && PrimaryProjectileClass != NULL)
+	if (!PrimaryWeaponDataRef.GetDefaultObject()->bIsHitScan)
 	{
 		// spawn the projectile at the muzzle TODO : Implement Pooling
 		SpawnProjs();
@@ -100,8 +103,8 @@ void UWeaponComponent::FireOnTime()
 		--FiredCount;
 		--AmmoConsumed;
 
-		if (WeaponDataRef.GetDefaultObject()->BurstRate > 0)
-			MyCharacter->GetWorldTimerManager().SetTimer(BurstTimeHandle, this, &UWeaponComponent::FireOnTime, WeaponDataRef.GetDefaultObject()->BurstRate, false);
+		if (PrimaryWeaponDataRef.GetDefaultObject()->BurstRate > 0)
+			MyCharacter->GetWorldTimerManager().SetTimer(BurstTimeHandle, this, &UWeaponComponent::FireOnTime, PrimaryWeaponDataRef.GetDefaultObject()->BurstRate, false);
 		else
 			FireOnTime();
 		
@@ -114,22 +117,22 @@ void UWeaponComponent::FireOnTime()
 
 }
 
-void UWeaponComponent::SpawnFromPool()
+void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 {
-	float _randomFloatX = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
-	float _randomFloatY = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
+	float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
+	float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
 
 	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
 	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 	const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
-	AFPSProjectile* _spawndProj = ammoPool->GetPoolObject();
+	AFPSProjectile* _spawndProj = ammoPool->GetPoolObjectOfType(projectileType);
 	if (_spawndProj != nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't Spawned"));
 
-		_spawndProj->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-		_spawndProj->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		_spawndProj->SetMaxSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		_spawndProj->SetInitialSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		_spawndProj->SetActorLocation(SpawnLocation);
 		_spawndProj->SetActorRotation(SpawnRotation);
 		_spawndProj->SetInactiveTimer(3);
@@ -142,28 +145,28 @@ void UWeaponComponent::SpawnProjs()
 {
 	if (ammoPool != nullptr)
 	{
-		SpawnFromPool();
+		SpawnFromPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
 		return;
 	}
 
 	if (World == NULL)
 		World = GetWorld();
 
-	if (World != NULL && WeaponDataRef != NULL)
+	if (World != NULL && PrimaryWeaponDataRef != NULL)
 	{
-		float _randomFloatX = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
-		float _randomFloatY = FMath::FRandRange(-WeaponDataRef.GetDefaultObject()->Spread, WeaponDataRef.GetDefaultObject()->Spread);
+		float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
+		float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
 
 		const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
-		PrimaryProjectileClass.GetDefaultObject()->SetMaxSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-		PrimaryProjectileClass.GetDefaultObject()->SetInitialSpeed(WeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject()->SetMaxSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject()->SetInitialSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
 		//Set Spawn Collision Handling Override
 		FActorSpawnParameters ActorSpawnParams;
 		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		ActorSpawnParams.Template = PrimaryProjectileClass.GetDefaultObject();
+		ActorSpawnParams.Template = PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject();
 
 		AFPSProjectile* _spawndProj = World->SpawnActor<AFPSProjectile>(ActorSpawnParams.Template->GetClass(), SpawnLocation, SpawnRotation, ActorSpawnParams);
 		if (_spawndProj->LifeSpan > 0)
@@ -176,15 +179,15 @@ void UWeaponComponent::SpawnHitScan()
 	if (World == NULL)
 		World = GetWorld();
 
-	if (World != NULL && WeaponDataRef != NULL)
+	if (World != NULL && PrimaryWeaponDataRef != NULL)
 	{
-		float _randomFloat = FMath::FRandRange(0, WeaponDataRef.GetDefaultObject()->Spread);
+		float _randomFloat = FMath::FRandRange(0, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
 		const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(0, _randomFloat, _randomFloat);
 		const FVector SpawnDirection = SpawnRotation.Vector();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 	
-		const FVector SpawnRange = SpawnLocation + SpawnDirection * WeaponDataRef.GetDefaultObject()->HitScanRange;
+		const FVector SpawnRange = SpawnLocation + SpawnDirection * PrimaryWeaponDataRef.GetDefaultObject()->HitScanRange;
 		FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, MyCharacter);
 		TraceParams.bReturnPhysicalMaterial = true;
 		//TraceParams.bTraceAsyncScene = true;
@@ -204,13 +207,13 @@ void UWeaponComponent::SpawnHitScan()
 void UWeaponComponent::Reload()
 {
 	CurrState = RELOADING;
-	MyCharacter->GetWorldTimerManager().SetTimer(ReloadTimer, this, &UWeaponComponent::ReloadComplete, WeaponDataRef.GetDefaultObject()->ReloadTime, false);
+	MyCharacter->GetWorldTimerManager().SetTimer(ReloadTimer, this, &UWeaponComponent::ReloadComplete, PrimaryWeaponDataRef.GetDefaultObject()->ReloadTime, false);
 }
 
 void UWeaponComponent::ReloadComplete()
 {
 	CurrState = READY;
-	AmmoConsumed = WeaponDataRef.GetDefaultObject()->ClipSize;
+	AmmoConsumed = PrimaryWeaponDataRef.GetDefaultObject()->ClipSize;
 }
 
 bool UWeaponComponent::CanFire()
