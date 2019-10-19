@@ -22,8 +22,7 @@ AFPSCharacter::AFPSCharacter()
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	FoVDifference = 20;
-
+	
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -92,7 +91,7 @@ void AFPSCharacter::BeginPlay()
 
 	WeaponComponent = FindComponentByClass<UWeaponComponent>();
 	if (NULL != WeaponComponent)
-		WeaponComponent->Init(this);
+		OnWeaponPick();
 
 	// Show or hide the two versions of the gun based on whether or not we're using motion controllers.
 	if (bUsingMotionControllers)
@@ -123,11 +122,11 @@ void AFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFPSCharacter::TouchStarted);
 	if (EnableTouchscreenMovement(PlayerInputComponent) == false)
 	{
-		PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFPSCharacter::OnFire);
+		PlayerInputComponent->BindAction("PrimaryFire", IE_Pressed, this, &AFPSCharacter::OnFire);
 	}
 
-	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &AFPSCharacter::ZoomIn);
-	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &AFPSCharacter::ZoomOut);
+	PlayerInputComponent->BindAction("SecondaryFire", IE_Pressed, this, &AFPSCharacter::OnSecondaryHold);
+	PlayerInputComponent->BindAction("SecondaryFire", IE_Released, this, &AFPSCharacter::OnSecondaryHold);
 
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AFPSCharacter::OnResetVR);
 
@@ -141,6 +140,11 @@ void AFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	PlayerInputComponent->BindAxis("TurnRate", this, &AFPSCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AFPSCharacter::LookUpAtRate);
+}
+
+void AFPSCharacter::OnWeaponPick()
+{
+	WeaponComponent->Init(this);
 }
 
 void AFPSCharacter::OnFire()
@@ -171,7 +175,7 @@ void AFPSCharacter::OnFire()
 							if (WeaponComponent->CanFire())
 							{
 								AnimInstance->Montage_Play(FireAnimation, 1.f);
-								WeaponComponent->OnPrimaryFire();
+								WeaponComponent->FirePrimary();
 							}
 						}
 					}
@@ -208,7 +212,12 @@ void AFPSCharacter::OnFire()
 }
 
 void AFPSCharacter::OnSecondaryHold()
-{}
+{
+	if (WeaponComponent != nullptr)
+	{
+		WeaponComponent->FireSecondary();
+	}
+}
 
 void AFPSCharacter::OnSecondaryRelease()
 {}
@@ -219,7 +228,6 @@ void AFPSCharacter::ZoomIn()
 	if (NULL != ProjectileClass)
 	{
 		(Cast<AFPSProjectile>(ProjectileClass->GetDefaultObject()))->ToggleSniperMode(true);
-		FirstPersonCameraComponent->FieldOfView -= FoVDifference;
 		Recoil -= 5;
 	}
 }
@@ -229,7 +237,7 @@ void AFPSCharacter::ZoomOut()
 	if (NULL != ProjectileClass)
 	{
 		(Cast<AFPSProjectile>(ProjectileClass->GetDefaultObject()))->ToggleSniperMode(false);
-		FirstPersonCameraComponent->FieldOfView += FoVDifference;
+		
 		Recoil += 5;
 	}
 }

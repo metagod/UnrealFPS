@@ -59,9 +59,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
-	int FoVDifference;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Fire)
 	float Recoil;
 
@@ -90,6 +87,9 @@ public:
 
 protected:
 	
+	UFUNCTION(BlueprintCallable, Category = "Fire")
+	void OnWeaponPick();
+
 	/** Fires a projectile. */
 	UFUNCTION(BlueprintCallable, Category = "Fire")
 	void OnFire();

@@ -64,7 +64,7 @@ public:
 
 	//Change from default fov, this is not the absolute value
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float FOVChange;
+	int FOVChange;
 
 	//Recoil
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
@@ -73,12 +73,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float RollShake;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+	float Recoil;
+
 	//SECONDARY WEAPON PROPERTIES
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Secondary)
 	bool bActivateOnHold;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float FOVChangeSecondary;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Secondary)
 	bool bIsSecondary;

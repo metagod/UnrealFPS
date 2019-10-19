@@ -47,7 +47,7 @@ public:
 	virtual void Init(class AFPSCharacter* _ref);
 
 	UFUNCTION(BlueprintCallable, Category = Weapon)
-	void OnPrimaryFire();
+	void OnFire();
 	
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	void OnSecondaryFire();
@@ -70,7 +70,9 @@ public:
 	FVector GunOffset;
 
 	virtual bool CanFire();
-	virtual void ChangeWeaponMode(eWeaponMode weaponMode);
+	virtual bool CanChangeMode(eWeaponMode newMode);
+	virtual void FirePrimary();
+	virtual void FireSecondary();
 
 protected:
 	FTimerHandle BurstTimeHandle;
@@ -89,13 +91,19 @@ protected:
 	void SpawnHitScan();
 	void ResetFireTimer();
 	void ReloadComplete();
-	bool bIsFiring;
-
+	
 	UFUNCTION(BluePrintNativeEvent, Category = Weapon)
 	void SetPrimaryProperties();	//Set as soon as weapon is equipped
 	UFUNCTION(BluePrintNativeEvent, Category = Weapon)
 	void SetSecondaryProperties();	//Set as soon as secondary feature is weaopon is activated
 
+	virtual void ChangeWeaponMode(eWeaponMode weaponMode);
+	virtual void ChangeWeaponState(eWeaponStates weaponState);
+
 	void SetPrimaryProperties_Implementation();
 	void SetSecondaryProperties_Implementation();
+
+private :
+	AWeaponData* ActiveWeapon;
+
 };

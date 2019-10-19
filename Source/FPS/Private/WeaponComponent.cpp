@@ -41,7 +41,7 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 	{
 		MyCharacter = _ref;
 
-		CurrState = READY;
+		ChangeWeaponState(eWeaponStates::READY);
 		
 		ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
 		
@@ -54,28 +54,25 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 
 
 		FP_MuzzleLocation = MyCharacter->GetMuzzleComponent();
-		SetPrimaryProperties();
+		ChangeWeaponMode(eWeaponMode::PRIMARY);
 	}
 }
 
 void UWeaponComponent::ResetFireTimer()
 {
-	CurrState = READY;
+	ChangeWeaponState(eWeaponStates::READY);
 }
 
-void UWeaponComponent::OnPrimaryFire()
+void UWeaponComponent::OnFire()
 {
 	if (!CanFire())
 		return;
 
-	if (PrimaryWeaponDataRef.GetDefaultObject()->BurstRate > 0)
-		bIsFiring = true;
-	
-	CurrState = FIRING;
+	ChangeWeaponState(eWeaponStates::FIRING);
 
-	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, PrimaryWeaponDataRef.GetDefaultObject()->RateOfFire, false);
+	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, ActiveWeapon->RateOfFire, false);
 
-	FiredCount = PrimaryWeaponDataRef.GetDefaultObject()->BurstAmount;
+	FiredCount = ActiveWeapon->BurstAmount;
 	FireOnTime();
 }
 
@@ -87,8 +84,9 @@ void UWeaponComponent::OnSecondaryFire()
 
 void UWeaponComponent::FireOnTime()
 {
+	--AmmoConsumed;
 	// try and fire a projectile
-	if (!PrimaryWeaponDataRef.GetDefaultObject()->bIsHitScan)
+	if (!ActiveWeapon->bIsHitScan)
 	{
 		// spawn the projectile at the muzzle TODO : Implement Pooling
 		SpawnProjs();
@@ -98,29 +96,27 @@ void UWeaponComponent::FireOnTime()
 		SpawnHitScan();
 	}
 
+	if (AmmoConsumed == 0)
+	{
+		ChangeWeaponState(eWeaponStates::RELOADING);
+	}
+
 	if (FiredCount > 1)
 	{
 		--FiredCount;
-		--AmmoConsumed;
-
+		
 		if (PrimaryWeaponDataRef.GetDefaultObject()->BurstRate > 0)
-			MyCharacter->GetWorldTimerManager().SetTimer(BurstTimeHandle, this, &UWeaponComponent::FireOnTime, PrimaryWeaponDataRef.GetDefaultObject()->BurstRate, false);
+			MyCharacter->GetWorldTimerManager().SetTimer(BurstTimeHandle, this, &UWeaponComponent::FireOnTime, ActiveWeapon->BurstRate, false);
 		else
 			FireOnTime();
 		
 	}
-	else
-	{
-		bIsFiring = false;
-		return;
-	}
-
 }
 
 void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 {
-	float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
-	float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
+	float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, ActiveWeapon->Spread);
+	float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, ActiveWeapon->Spread);
 
 	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
 	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
@@ -131,8 +127,8 @@ void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't Spawned"));
 
-		_spawndProj->SetMaxSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-		_spawndProj->SetInitialSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
+		_spawndProj->SetMaxSpeed(ActiveWeapon->ProjectileSpeed);
+		_spawndProj->SetInitialSpeed(ActiveWeapon->ProjectileSpeed);
 		_spawndProj->SetActorLocation(SpawnLocation);
 		_spawndProj->SetActorRotation(SpawnRotation);
 		_spawndProj->SetInactiveTimer(3);
@@ -145,7 +141,7 @@ void UWeaponComponent::SpawnProjs()
 {
 	if (ammoPool != nullptr)
 	{
-		SpawnFromPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
+		SpawnFromPool(ActiveWeapon->ProjectileClass);
 		return;
 	}
 
@@ -179,15 +175,15 @@ void UWeaponComponent::SpawnHitScan()
 	if (World == NULL)
 		World = GetWorld();
 
-	if (World != NULL && PrimaryWeaponDataRef != NULL)
+	if (World != NULL && ActiveWeapon != nullptr)
 	{
-		float _randomFloat = FMath::FRandRange(0, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
+		float _randomFloat = FMath::FRandRange(0, ActiveWeapon->Spread);
 		const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(0, _randomFloat, _randomFloat);
 		const FVector SpawnDirection = SpawnRotation.Vector();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 	
-		const FVector SpawnRange = SpawnLocation + SpawnDirection * PrimaryWeaponDataRef.GetDefaultObject()->HitScanRange;
+		const FVector SpawnRange = SpawnLocation + SpawnDirection * ActiveWeapon->HitScanRange;
 		FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, MyCharacter);
 		TraceParams.bReturnPhysicalMaterial = true;
 		//TraceParams.bTraceAsyncScene = true;
@@ -206,38 +202,89 @@ void UWeaponComponent::SpawnHitScan()
 
 void UWeaponComponent::Reload()
 {
-	CurrState = RELOADING;
 	MyCharacter->GetWorldTimerManager().SetTimer(ReloadTimer, this, &UWeaponComponent::ReloadComplete, PrimaryWeaponDataRef.GetDefaultObject()->ReloadTime, false);
 }
 
 void UWeaponComponent::ReloadComplete()
 {
-	CurrState = READY;
 	AmmoConsumed = PrimaryWeaponDataRef.GetDefaultObject()->ClipSize;
+	ChangeWeaponState(eWeaponStates::READY);
 }
 
 bool UWeaponComponent::CanFire()
 {
-	return !bIsFiring && CurrState == READY;
+	return CurrState == READY;
+}
+
+void UWeaponComponent::FirePrimary()
+{
+	ChangeWeaponMode(eWeaponMode::PRIMARY);
+	OnFire();
+	
+}
+
+void UWeaponComponent::FireSecondary()
+{
+	ChangeWeaponMode(eWeaponMode::SECONDARY);
+	if (!ActiveWeapon->bActivateOnHold)
+		OnFire();
+}
+
+bool UWeaponComponent::CanChangeMode(eWeaponMode newMode)
+{
+	if (newMode == CurrMode)
+		return false;				//No need to change mode
+
+	if (newMode == eWeaponMode::PRIMARY && CurrMode == eWeaponMode::SECONDARY)
+	{
+		return !SecondaryWeaponDataRef.GetDefaultObject()->bActivateOnHold;
+	}
+	else if (newMode == eWeaponMode::SECONDARY && CurrMode == eWeaponMode::PRIMARY)
+	{
+		return true;
+	}
+
+	return true;
 }
 
 void UWeaponComponent::SetSecondaryProperties_Implementation()
-{}
+{
+	MyCharacter->GetFirstPersonCameraComponent()->FieldOfView += SecondaryWeaponDataRef.GetDefaultObject()->FOVChange;
+	MyCharacter->Recoil = SecondaryWeaponDataRef.GetDefaultObject()->Recoil;
+	ActiveWeapon = SecondaryWeaponDataRef.GetDefaultObject();
+}
 
 void UWeaponComponent::SetPrimaryProperties_Implementation()
-{}
+{
+	MyCharacter->GetFirstPersonCameraComponent()->FieldOfView += PrimaryWeaponDataRef.GetDefaultObject()->FOVChange;
+	MyCharacter->Recoil = PrimaryWeaponDataRef.GetDefaultObject()->Recoil;
+	ActiveWeapon = PrimaryWeaponDataRef.GetDefaultObject();
+}
 
 
 void UWeaponComponent::ChangeWeaponMode(eWeaponMode weaponMode)
 {
-	if (CurrMode != weaponMode)
+	switch (weaponMode)
 	{
-		switch (weaponMode)
-		{
-		case eWeaponMode::PRIMARY: SetPrimaryProperties(); break;
-		case eWeaponMode::SECONDARY: SetSecondaryProperties(); break;
-			default:
-				break;
-		}
+	case eWeaponMode::PRIMARY: SetPrimaryProperties(); break;
+	case eWeaponMode::SECONDARY: SetSecondaryProperties(); break;
+		default:
+			break;
+	}	
+}
+
+void UWeaponComponent::ChangeWeaponState(eWeaponStates weaponState)
+{
+	if (CurrState == weaponState)
+		return;
+
+	CurrState = weaponState;
+
+	switch (weaponState)
+	{
+	case eWeaponStates::READY: break;
+	case eWeaponStates::RELOADING: Reload(); break;
+	case eWeaponStates::FIRING: break;
+	default: break;
 	}
 }
