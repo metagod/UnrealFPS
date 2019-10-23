@@ -50,9 +50,6 @@ public:
 	void OnFire();
 	
 	UFUNCTION(BlueprintCallable, Category = Weapon)
-	void OnSecondaryFire();
-
-	UFUNCTION(BlueprintCallable, Category = Weapon)
 	void Reload();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -71,8 +68,10 @@ public:
 
 	virtual bool CanFire();
 	virtual bool CanChangeMode(eWeaponMode newMode);
-	virtual void FirePrimary();
-	virtual void FireSecondary();
+	virtual void FirePrimaryPressed();
+	virtual void FireSecondaryPressed();
+	virtual void OnPrimaryRelease();
+	virtual void OnSecondaryRelease();
 
 protected:
 	FTimerHandle BurstTimeHandle;

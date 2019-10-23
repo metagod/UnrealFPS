@@ -122,11 +122,12 @@ void AFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFPSCharacter::TouchStarted);
 	if (EnableTouchscreenMovement(PlayerInputComponent) == false)
 	{
-		PlayerInputComponent->BindAction("PrimaryFire", IE_Pressed, this, &AFPSCharacter::OnFire);
+		PlayerInputComponent->BindAction("PrimaryFire", IE_Pressed, this, &AFPSCharacter::OnFirePressed);
+		PlayerInputComponent->BindAction("PrimaryFire", IE_Released, this, &AFPSCharacter::OnFireReleased);
 	}
 
 	PlayerInputComponent->BindAction("SecondaryFire", IE_Pressed, this, &AFPSCharacter::OnSecondaryHold);
-	PlayerInputComponent->BindAction("SecondaryFire", IE_Released, this, &AFPSCharacter::OnSecondaryHold);
+	PlayerInputComponent->BindAction("SecondaryFire", IE_Released, this, &AFPSCharacter::OnSecondaryRelease);
 
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AFPSCharacter::OnResetVR);
 
@@ -147,7 +148,7 @@ void AFPSCharacter::OnWeaponPick()
 	WeaponComponent->Init(this);
 }
 
-void AFPSCharacter::OnFire()
+void AFPSCharacter::OnFirePressed()
 {
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
@@ -175,7 +176,7 @@ void AFPSCharacter::OnFire()
 							if (WeaponComponent->CanFire())
 							{
 								AnimInstance->Montage_Play(FireAnimation, 1.f);
-								WeaponComponent->FirePrimary();
+								WeaponComponent->FirePrimaryPressed();
 							}
 						}
 					}
@@ -211,16 +212,23 @@ void AFPSCharacter::OnFire()
 	
 }
 
+void AFPSCharacter::OnFireReleased()
+{
+	if (WeaponComponent != nullptr)
+		WeaponComponent->OnPrimaryRelease();
+}
+
 void AFPSCharacter::OnSecondaryHold()
 {
 	if (WeaponComponent != nullptr)
-	{
-		WeaponComponent->FireSecondary();
-	}
+		WeaponComponent->FireSecondaryPressed();
 }
 
 void AFPSCharacter::OnSecondaryRelease()
-{}
+{
+	if (WeaponComponent != nullptr)
+		WeaponComponent->OnSecondaryRelease();
+}
 
 void AFPSCharacter::ZoomIn()
 {
@@ -267,7 +275,7 @@ void AFPSCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector 
 	}
 	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
 	{
-		OnFire();
+		OnFirePressed();
 	}
 	TouchItem.bIsPressed = false;
 }

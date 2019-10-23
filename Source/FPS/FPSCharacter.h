@@ -92,13 +92,16 @@ protected:
 
 	/** Fires a projectile. */
 	UFUNCTION(BlueprintCallable, Category = "Fire")
-	void OnFire();
+	void OnFirePressed();
+
+	UFUNCTION(BlueprintCallable, Category = "Fire")
+	void OnFireReleased();
 
 	UFUNCTION(BlueprintCallable, Category = "Fire")
 	void OnSecondaryHold();
 
 	UFUNCTION(BlueprintCallable, Category = "Fire")
-		void OnSecondaryRelease();
+	void OnSecondaryRelease();
 	/** Resets HMD orientation and position in VR. */
 	void OnResetVR();
 
