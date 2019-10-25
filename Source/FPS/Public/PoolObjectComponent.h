@@ -31,7 +31,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void CreateComplexPool(TSubclassOf<class AFPSProjectile> prefab);
+	void CreateComplexPool(TSubclassOf<class AFPSProjectile> prefab, int size = 0);
 
 	AFPSProjectile* GetPoolObjectOfType(TSubclassOf<class AFPSProjectile> prefab);
 

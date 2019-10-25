@@ -13,7 +13,8 @@ UWeaponComponent::UWeaponComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	bIsPrimaryKeyDown = false;
+	bIsSecondaryKeyDown = false;
 	FiredCount = 0;
 	// ...
 }
@@ -32,6 +33,11 @@ void UWeaponComponent::TickComponent( float DeltaTime, ELevelTick TickType, FAct
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 
+	if (bIsPrimaryKeyDown || (bIsSecondaryKeyDown && !ActiveWeapon->bActivateOnHold))
+	{
+		OnFire();
+	}
+
 	// ...
 }
 
@@ -47,20 +53,23 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 		
 		if (ammoPool != nullptr)
 		{
-			ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
+			ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass, PrimaryWeaponDataRef.GetDefaultObject()->ClipSize);
 			if (SecondaryWeaponDataRef != NULL)
-				ammoPool->CreateComplexPool(SecondaryWeaponDataRef.GetDefaultObject()->ProjectileClass);
+				ammoPool->CreateComplexPool(SecondaryWeaponDataRef.GetDefaultObject()->ProjectileClass, SecondaryWeaponDataRef.GetDefaultObject()->ClipSize);
 		}
-
-
+		
 		FP_MuzzleLocation = MyCharacter->GetMuzzleComponent();
 		ChangeWeaponMode(eWeaponMode::PRIMARY);
+		AmmoRemaining = ActiveWeapon->ClipSize;
 	}
 }
 
 void UWeaponComponent::ResetFireTimer()
 {
-	ChangeWeaponState(eWeaponStates::READY);
+	///Can't ovverride reloading state
+
+	if (CurrState != eWeaponStates::RELOADING)
+		ChangeWeaponState(eWeaponStates::READY);
 }
 
 void UWeaponComponent::OnFire()
@@ -80,8 +89,7 @@ void UWeaponComponent::OnFire()
 
 
 void UWeaponComponent::FireOnTime()
-{
-	--AmmoConsumed;
+{	
 	// try and fire a projectile
 	if (!ActiveWeapon->bIsHitScan)
 	{
@@ -93,9 +101,12 @@ void UWeaponComponent::FireOnTime()
 		SpawnHitScan();
 	}
 
-	if (AmmoConsumed == 0)
-	{
+	--AmmoRemaining;
+
+	if (AmmoRemaining <= 0)
+	{	
 		ChangeWeaponState(eWeaponStates::RELOADING);
+		return;
 	}
 
 	if (FiredCount > 1)
@@ -122,11 +133,14 @@ void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 	AFPSProjectile* _spawndProj = ammoPool->GetPoolObjectOfType(projectileType);
 	if (_spawndProj != nullptr)
 	{	
+		_spawndProj->GetCollisionComp()->IgnoreActorWhenMoving(MyCharacter, true);
+		MyCharacter->MoveIgnoreActorAdd(_spawndProj);
+
 		_spawndProj->SetMaxSpeed(ActiveWeapon->ProjectileSpeed);
 		_spawndProj->SetInitialSpeed(ActiveWeapon->ProjectileSpeed);
 		_spawndProj->SetActorLocation(SpawnLocation);
 		_spawndProj->SetActorRotation(SpawnRotation);
-		_spawndProj->SetInactiveTimer(3);
+		_spawndProj->SetInactiveTimer(ActiveWeapon->projectileLifeSpan);
 		_spawndProj->SetActive(true);
 		_spawndProj->OnFire();
 	}
@@ -139,30 +153,6 @@ void UWeaponComponent::SpawnProjs()
 		SpawnFromPool(ActiveWeapon->ProjectileClass);
 		return;
 	}
-
-	/*if (World == NULL)
-		World = GetWorld();
-*/
-	//if (World != NULL && PrimaryWeaponDataRef != NULL)
-	//{
-	//	float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
-	//	float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, PrimaryWeaponDataRef.GetDefaultObject()->Spread);
-
-	//	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
-	//	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-	//	const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-	//	PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject()->SetMaxSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-	//	PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject()->SetInitialSpeed(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileSpeed);
-	//	//Set Spawn Collision Handling Override
-	//	FActorSpawnParameters ActorSpawnParams;
-	//	ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	//	ActorSpawnParams.Template = PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass.GetDefaultObject();
-
-	//	AFPSProjectile* _spawndProj = World->SpawnActor<AFPSProjectile>(ActorSpawnParams.Template->GetClass(), SpawnLocation, SpawnRotation, ActorSpawnParams);
-	//	if (_spawndProj->LifeSpan > 0)
-	//		_spawndProj->SetLifeSpan(_spawndProj->LifeSpan);
-	//}
 }
 
 void UWeaponComponent::SpawnHitScan()
@@ -202,13 +192,13 @@ void UWeaponComponent::Reload()
 
 void UWeaponComponent::ReloadComplete()
 {
-	AmmoConsumed = PrimaryWeaponDataRef.GetDefaultObject()->ClipSize;
+	AmmoRemaining = PrimaryWeaponDataRef.GetDefaultObject()->ClipSize;
 	ChangeWeaponState(eWeaponStates::READY);
 }
 
 bool UWeaponComponent::CanFire()
 {
-	return CurrState == READY;
+	return CurrState == eWeaponStates::READY;
 }
 
 void UWeaponComponent::SetSecondaryProperties_Implementation()
@@ -228,24 +218,24 @@ void UWeaponComponent::SetPrimaryProperties_Implementation()
 #pragma region Listeners
 void UWeaponComponent::FirePrimaryPressed()
 {
-	OnFire();
+	bIsPrimaryKeyDown = true;
 }
 
 void UWeaponComponent::FireSecondaryPressed()
 {
 	ChangeWeaponMode(eWeaponMode::SECONDARY);
-	if (!ActiveWeapon->bActivateOnHold)
-		OnFire();
+	bIsSecondaryKeyDown = true;
 }
 
 void UWeaponComponent::OnPrimaryRelease()
 {
-
+	bIsPrimaryKeyDown = false;
 }
 
 void UWeaponComponent::OnSecondaryRelease()
 {
 	ChangeWeaponMode(eWeaponMode::PRIMARY);
+	bIsSecondaryKeyDown = false;
 }
 
 #pragma endregion Listeners
@@ -257,7 +247,7 @@ bool UWeaponComponent::CanChangeMode(eWeaponMode newMode)
 
 	if (newMode == eWeaponMode::PRIMARY && CurrMode == eWeaponMode::SECONDARY)
 	{
-		return !SecondaryWeaponDataRef.GetDefaultObject()->bActivateOnHold;
+		return !SecondaryWeaponDataRef.GetDefaultObject()->bActivateOnHold && bIsSecondaryKeyDown;
 	}
 	else if (newMode == eWeaponMode::SECONDARY && CurrMode == eWeaponMode::PRIMARY)
 	{
@@ -280,8 +270,7 @@ void UWeaponComponent::ChangeWeaponMode(eWeaponMode weaponMode)
 }
 
 void UWeaponComponent::ChangeWeaponState(eWeaponStates weaponState)
-{
-	
+{	
 	if (CurrState == weaponState)
 		return;
 

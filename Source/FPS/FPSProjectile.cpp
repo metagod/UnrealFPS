@@ -31,13 +31,10 @@ AFPSProjectile::AFPSProjectile()
 
 void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherComp != NULL)
-		UE_LOG(LogTemp, Warning, TEXT("Hit on : %s"), *OtherComp->GetOwner()->GetName());
-
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
-		OtherComp->AddImpulseAtLocation(GetVelocity() * 100.0f, GetActorLocation());
+		OtherComp->AddImpulseAtLocation(GetVelocity() * ImpactForce, GetActorLocation());
 
 		SetActive(false);
 	}
@@ -85,13 +82,17 @@ void AFPSProjectile::SetActive(bool toggle)
 	isActive = toggle;
 	SetActorHiddenInGame(!toggle);
 	toggle ? ProjectileMovement->Activate() : ProjectileMovement->Deactivate();
-	toggle ? CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics) : CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ProjectileMovement->SetUpdatedComponent(GetRootComponent());
+	//UE_LOG(LogTemp, Warning, TEXT("Insitgator %s"), *Instigator->GetName());
+	//toggle ? CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics) : CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AFPSProjectile::OnFire()
 {
 	if (isActive && ProjectileMovement->IsActive())
+	{
 		ProjectileMovement->Velocity = this->GetActorForwardVector() * ProjectileMovement->InitialSpeed;
+	}
 }
 
 bool AFPSProjectile::IsActorActive()

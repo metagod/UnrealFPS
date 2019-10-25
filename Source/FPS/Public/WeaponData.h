@@ -43,7 +43,7 @@ public:
 
 	//PROJECTILE Life Span
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-	float timeInSeconds;
+	float projectileLifeSpan;
 
 	/// Projs Fired Per Second
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)

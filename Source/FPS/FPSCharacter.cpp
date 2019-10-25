@@ -120,7 +120,7 @@ void AFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFPSCharacter::TouchStarted);
-	if (EnableTouchscreenMovement(PlayerInputComponent) == false)
+	//if (EnableTouchscreenMovement(PlayerInputComponent) == false)
 	{
 		PlayerInputComponent->BindAction("PrimaryFire", IE_Pressed, this, &AFPSCharacter::OnFirePressed);
 		PlayerInputComponent->BindAction("PrimaryFire", IE_Released, this, &AFPSCharacter::OnFireReleased);
@@ -150,64 +150,67 @@ void AFPSCharacter::OnWeaponPick()
 
 void AFPSCharacter::OnFirePressed()
 {
-	// try and fire a projectile
-	if (ProjectileClass != NULL)
+	if (NULL != WeaponComponent)
 	{
-		UWorld* const World = GetWorld();
-		if (World != NULL)
+		// try and play a firing animation if specified
+		if (FireAnimation != NULL)
 		{
-			if (bUsingMotionControllers)
+			// Get the animation object for the arms mesh
+			UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+			if (AnimInstance != NULL)
 			{
-				const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
-				const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
-				World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-			}
-			else
-			{
-				if (NULL != WeaponComponent)
+				if (WeaponComponent->CanFire())
 				{
-					// try and play a firing animation if specified
-					if (FireAnimation != NULL)
-					{
-						// Get the animation object for the arms mesh
-						UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-						if (AnimInstance != NULL)
-						{
-							if (WeaponComponent->CanFire())
-							{
-								AnimInstance->Montage_Play(FireAnimation, 1.f);
-								WeaponComponent->FirePrimaryPressed();
-							}
-						}
-					}
-				}
-				else
-				{
-					const FRotator SpawnRotation = GetControlRotation();
-					// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-					const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-					//Set Spawn Collision Handling Override
-					FActorSpawnParameters ActorSpawnParams;
-					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-					// spawn the projectile at the muzzle
-					World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+					AnimInstance->Montage_Play(FireAnimation, 1.f);
+					WeaponComponent->FirePrimaryPressed();
+					//Add Camera Shake
+					if (NULL != PlayerController)
+						PlayerController->ClientPlayCameraShake(WeaponFireShake, 1.0f);
 				}
 			}
-			
-			//Add Camera Shake
-			if (NULL != PlayerController)
-				PlayerController->ClientPlayCameraShake(WeaponFireShake, 1.0f);
 		}
-		
 	}
 
-	// try and play the sound if specified
-	if (FireSound != NULL)
-	{
-		//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	}
+	//// try and fire a projectile
+	//if (ProjectileClass != NULL)
+	//{
+	//	UWorld* const World = GetWorld();
+	//	if (World != NULL)
+	//	{
+	//		if (bUsingMotionControllers)
+	//		{
+	//			const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
+	//			const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
+	//			World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+	//		}
+	//		else
+	//		{
+	//			
+	//			else
+	//			{
+	//				const FRotator SpawnRotation = GetControlRotation();
+	//				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+	//				const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+
+	//				//Set Spawn Collision Handling Override
+	//				FActorSpawnParameters ActorSpawnParams;
+	//				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+
+	//				// spawn the projectile at the muzzle
+	//				World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
+	//			}
+	//		}
+	//		
+	//		
+	//	}
+	//	
+	//}
+
+	//// try and play the sound if specified
+	//if (FireSound != NULL)
+	//{
+	//	//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+	//}
 
 	
 }
@@ -219,7 +222,7 @@ void AFPSCharacter::OnFireReleased()
 }
 
 void AFPSCharacter::OnSecondaryHold()
-{
+{	
 	if (WeaponComponent != nullptr)
 		WeaponComponent->FireSecondaryPressed();
 }

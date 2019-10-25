@@ -30,6 +30,10 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Projectile)
 	float LifeSpan;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
+	float ImpactForce;
+
+
 	/** Returns CollisionComp subobject **/
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/

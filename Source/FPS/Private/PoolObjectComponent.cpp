@@ -22,12 +22,14 @@ void UPoolObjectComponent::BeginPlay()
 	
 }
 
-void UPoolObjectComponent::CreateComplexPool(TSubclassOf<class AFPSProjectile> prefab)
+void UPoolObjectComponent::CreateComplexPool(TSubclassOf<class AFPSProjectile> prefab, int size)
 {
 	check(prefab != NULL)
 
 	if (!complexPool.Contains(prefab))
 	{
+		poolSize = size == 0 ? poolSize : size;
+
 		TArray<AFPSProjectile*> complexArray; 
 
 		UWorld* world = GetWorld();

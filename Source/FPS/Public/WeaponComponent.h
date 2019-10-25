@@ -12,20 +12,10 @@ class FPS_API UWeaponComponent : public UActorComponent
 	GENERATED_BODY()
 private :
 
-	int AmmoConsumed;
+	int AmmoRemaining;
 	int FiredCount;
 	void FireOnTime();
 public:	
-	
-	enum eWeaponStates
-	{
-		READY, 
-		FIRING, 
-		RELOADING, 
-		EMPTY, 
-
-		None = 999
-	};
 
 	enum eWeaponMode
 	{
@@ -104,5 +94,18 @@ protected:
 
 private :
 	AWeaponData* ActiveWeapon;
+	bool bIsPrimaryKeyDown;
+	bool bIsSecondaryKeyDown;
 
+};
+
+UENUM()
+enum class eWeaponStates : uint8
+{
+	READY,
+	FIRING,
+	RELOADING,
+	EMPTY,
+
+	None = 231
 };
