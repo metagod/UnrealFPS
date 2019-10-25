@@ -56,6 +56,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	FVector GunOffset;
 
+	FORCEINLINE int GetCurrentAmmo() const { return AmmoRemaining; }
+	int GetClipSize();
+
 	virtual bool CanFire();
 	virtual bool CanChangeMode(eWeaponMode newMode);
 	virtual void FirePrimaryPressed();

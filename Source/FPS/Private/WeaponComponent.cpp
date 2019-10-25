@@ -196,6 +196,11 @@ void UWeaponComponent::ReloadComplete()
 	ChangeWeaponState(eWeaponStates::READY);
 }
 
+inline int UWeaponComponent::GetClipSize()
+{
+	return ActiveWeapon->ClipSize;
+}
+
 bool UWeaponComponent::CanFire()
 {
 	return CurrState == eWeaponStates::READY;
