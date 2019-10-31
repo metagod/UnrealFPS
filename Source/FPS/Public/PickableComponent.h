@@ -16,8 +16,8 @@ public:
 	// Sets default values for this component's properties
 	UPickableComponent();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PickableItem")
-	UBoxComponent* CollisionComp;
+	UPROPERTY(EditAnywhere, Category = "PickableItem")
+	UShapeComponent* CollisionComp;
 
 	UPROPERTY (EditAnywhere, Category = "PickableItem")
 	bool canBePicked;
@@ -42,4 +42,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PickableItem")
 	void ShowPickPrompt(class AActor* owner);
+
+	UFUNCTION(BlueprintCallable, Category = "PickableItem")
+	void SetCollisionComponent(UShapeComponent* component);
 };

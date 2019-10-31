@@ -10,6 +10,18 @@ UPickableComponent::UPickableComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+	if (CollisionComp == nullptr)
+	{
+		UBoxComponent* collider = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
+		collider->SetBoxExtent(FVector(5, 5, 5));
+		collider->SetRelativeLocation(FVector::ZeroVector);
+		collider->SetWorldLocation(FVector::ZeroVector);
+		collider->SetCollisionProfileName(TEXT("Trigger"));
+		collider->OnComponentBeginOverlap.AddDynamic(this, &UPickableComponent::OnOverlapBegin);
+		collider->OnComponentEndOverlap.AddDynamic(this, &UPickableComponent::OnOverlapEnd);
+		CollisionComp = collider;
+		collider = NULL;
+	}
 	// ...
 }
 
@@ -19,12 +31,13 @@ void UPickableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-	CollisionComp->SetBoxExtent(FVector(1, 1, 1));
-	CollisionComp->SetCollisionProfileName(TEXT("Trigger"));
-	CollisionComp->AddToRoot();
-	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &UPickableComponent::OnOverlapBegin);
-	CollisionComp->OnComponentEndOverlap.AddDynamic(this, &UPickableComponent::OnOverlapEnd);
+	if (NULL != GetOwner() && GetOwner()->GetRootComponent() != CollisionComp)
+	{
+		FVector position = GetOwner()->GetActorTransform().GetLocation();
+		CollisionComp->SetWorldLocation(position);
+		GetOwner()->SetRootComponent(CollisionComp);
+		
+	}
 	// ...
 }
 
@@ -48,5 +61,10 @@ void UPickableComponent::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AAct
 
 void UPickableComponent::ShowPickPrompt(AActor * owner)
 {
+}
+
+void UPickableComponent::SetCollisionComponent(UShapeComponent * component)
+{
+	CollisionComp = component;
 }
 
