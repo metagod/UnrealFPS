@@ -9,20 +9,6 @@ UPickableComponent::UPickableComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	if (CollisionComp == nullptr)
-	{
-		UBoxComponent* collider = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionBox"));
-		collider->SetBoxExtent(FVector(5, 5, 5));
-		collider->SetRelativeLocation(FVector::ZeroVector);
-		collider->SetWorldLocation(FVector::ZeroVector);
-		collider->SetCollisionProfileName(TEXT("Trigger"));
-		collider->OnComponentBeginOverlap.AddDynamic(this, &UPickableComponent::OnOverlapBegin);
-		collider->OnComponentEndOverlap.AddDynamic(this, &UPickableComponent::OnOverlapEnd);
-		CollisionComp = collider;
-		collider = NULL;
-	}
-	// ...
 }
 
 
@@ -38,6 +24,12 @@ void UPickableComponent::BeginPlay()
 		GetOwner()->SetRootComponent(CollisionComp);
 		
 	}
+
+	if (CollisionComp != NULL)
+	{
+		CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &UPickableComponent::OnOverlapBegin);
+		CollisionComp->OnComponentEndOverlap.AddDynamic(this, &UPickableComponent::OnOverlapEnd);
+	}
 	// ...
 }
 
@@ -48,18 +40,26 @@ void UPickableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (canBePicked && target != nullptr)
 		ShowPickPrompt(target);
-
 }
 
-void UPickableComponent::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
-{
-}
-
-void UPickableComponent::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
-{
-}
+//void UPickableComponent::OnOverlapBegin(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+//{
+//}
+//
+//void UPickableComponent::OnOverlapEnd(UPrimitiveComponent * OverlappedComp, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex)
+//{
+//}
 
 void UPickableComponent::ShowPickPrompt(AActor * owner)
+{
+	UE_LOG(LogTemp, Log, TEXT("Prompt will be visible to %s"), *owner->GetName())
+}
+
+void UPickableComponent::OnPickUpTriggered()
+{
+}
+
+void UPickableComponent::OnPickupComplete()
 {
 }
 
