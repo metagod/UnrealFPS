@@ -3,6 +3,7 @@
 #include "FPS.h"
 #include "FPSProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "DamageReceiverInterface.h"
 
 AFPSProjectile::AFPSProjectile() 
 {
@@ -36,6 +37,12 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPr
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * ImpactForce, GetActorLocation());
 
+		bool bIsImplemented = OtherActor->GetClass()->ImplementsInterface(UDamageReceiverInterface::StaticClass()); // bIsImplemented will be true if OriginalObject implements UReactToTriggerInterface.
+		if (bIsImplemented)
+		{
+			IDamageReceiverInterface* ReactingObject = Cast<IDamageReceiverInterface>(OtherActor);
+			ReactingObject->OnDamageTaken(OtherActor, 10.0);
+		}
 		SetActive(false);
 	}
 }
