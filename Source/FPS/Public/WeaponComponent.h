@@ -71,7 +71,7 @@ protected:
 	FTimerHandle RoFTimeHandle;
 	FTimerHandle ReloadTimer;
 
-	eWeaponStates CurrState;
+	EWeaponStates CurrState;
 	eWeaponMode	CurrMode;
 
 	class AFPSCharacter* MyCharacter;
@@ -90,7 +90,7 @@ protected:
 	void SetSecondaryProperties();	//Set as soon as secondary feature is weaopon is activated
 
 	virtual void ChangeWeaponMode(eWeaponMode weaponMode);
-	virtual void ChangeWeaponState(eWeaponStates weaponState);
+	virtual void ChangeWeaponState(EWeaponStates weaponState);
 
 	void SetPrimaryProperties_Implementation();
 	void SetSecondaryProperties_Implementation();
@@ -103,7 +103,7 @@ private :
 };
 
 UENUM()
-enum class eWeaponStates : uint8
+enum class EWeaponStates : uint8
 {
 	READY,
 	FIRING,

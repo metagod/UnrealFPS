@@ -47,13 +47,14 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 	{
 		MyCharacter = _ref;
 
-		ChangeWeaponState(eWeaponStates::READY);
+		ChangeWeaponState(EWeaponStates::READY);
 		
 		ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
 		
 		if (ammoPool != nullptr)
 		{
-			ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass, PrimaryWeaponDataRef.GetDefaultObject()->ClipSize);
+			if (PrimaryWeaponDataRef != NULL)
+				ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass, PrimaryWeaponDataRef.GetDefaultObject()->ClipSize);
 			if (SecondaryWeaponDataRef != NULL)
 				ammoPool->CreateComplexPool(SecondaryWeaponDataRef.GetDefaultObject()->ProjectileClass, SecondaryWeaponDataRef.GetDefaultObject()->ClipSize);
 		}
@@ -68,8 +69,8 @@ void UWeaponComponent::ResetFireTimer()
 {
 	///Can't ovverride reloading state
 
-	if (CurrState != eWeaponStates::RELOADING)
-		ChangeWeaponState(eWeaponStates::READY);
+	if (CurrState != EWeaponStates::RELOADING)
+		ChangeWeaponState(EWeaponStates::READY);
 }
 
 void UWeaponComponent::OnFire()
@@ -79,7 +80,7 @@ void UWeaponComponent::OnFire()
 
 	UE_LOG(LogTemp, Warning, TEXT("Firing"));
 
-	ChangeWeaponState(eWeaponStates::FIRING);
+	ChangeWeaponState(EWeaponStates::FIRING);
 
 	MyCharacter->GetWorldTimerManager().SetTimer(RoFTimeHandle, this, &UWeaponComponent::ResetFireTimer, ActiveWeapon->RateOfFire, false);
 
@@ -105,7 +106,7 @@ void UWeaponComponent::FireOnTime()
 
 	if (AmmoRemaining <= 0)
 	{	
-		ChangeWeaponState(eWeaponStates::RELOADING);
+		ChangeWeaponState(EWeaponStates::RELOADING);
 		return;
 	}
 
@@ -193,7 +194,7 @@ void UWeaponComponent::Reload()
 void UWeaponComponent::ReloadComplete()
 {
 	AmmoRemaining = PrimaryWeaponDataRef.GetDefaultObject()->ClipSize;
-	ChangeWeaponState(eWeaponStates::READY);
+	ChangeWeaponState(EWeaponStates::READY);
 }
 
 inline int UWeaponComponent::GetClipSize()
@@ -203,7 +204,7 @@ inline int UWeaponComponent::GetClipSize()
 
 bool UWeaponComponent::CanFire()
 {
-	return CurrState == eWeaponStates::READY;
+	return CurrState == EWeaponStates::READY;
 }
 
 void UWeaponComponent::SetSecondaryProperties_Implementation()
@@ -274,7 +275,7 @@ void UWeaponComponent::ChangeWeaponMode(eWeaponMode weaponMode)
 	}	
 }
 
-void UWeaponComponent::ChangeWeaponState(eWeaponStates weaponState)
+void UWeaponComponent::ChangeWeaponState(EWeaponStates weaponState)
 {	
 	if (CurrState == weaponState)
 		return;
@@ -283,9 +284,9 @@ void UWeaponComponent::ChangeWeaponState(eWeaponStates weaponState)
 
 	switch (weaponState)
 	{
-	case eWeaponStates::READY: break;
-	case eWeaponStates::RELOADING: Reload(); break;
-	case eWeaponStates::FIRING: break;
+	case EWeaponStates::READY: break;
+	case EWeaponStates::RELOADING: Reload(); break;
+	case EWeaponStates::FIRING: break;
 	default: break;
 	}
 }
