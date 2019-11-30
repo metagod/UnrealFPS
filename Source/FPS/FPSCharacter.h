@@ -160,5 +160,6 @@ public:
 
 	FORCEINLINE class USceneComponent* GetMuzzleComponent() const { return FP_MuzzleLocation; }
 
+
 };
 

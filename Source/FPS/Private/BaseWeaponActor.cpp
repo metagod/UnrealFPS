@@ -2,49 +2,43 @@
 
 #include "FPS.h"
 #include "BaseWeaponActor.h"
-#include "WeaponData.h"
-#include "PoolObjectComponent.h"
 
-// Sets default values
-ABaseWeaponActor::ABaseWeaponActor()
+void ABaseWeaponActor:: Tick (float DeltaTime)
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-}
-
-// Called when the game starts or when spawned
-void ABaseWeaponActor::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void ABaseWeaponActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 
 }
 
 void ABaseWeaponActor::Init(AFPSCharacter * owner)
 {
-	MyOwner = owner;
-
-	ammoPool = FindComponentByClass<UPoolObjectComponent>();
-	ammoPool->CreateComplexPool(ProjectileClass, PrimaryWeaponDataRef.GetDefaultObject()->ClipSize);	
+	Super::Init(owner);
 }
 
-void ABaseWeaponActor::OnFire()
+void ABaseWeaponActor::OnPrimaryUse()
 {
+	OnItemUsed();
 }
 
-void ABaseWeaponActor::Reload()
+void ABaseWeaponActor::OnSecondaryUse()
 {
+	OnItemUsedSecondary();
 }
 
-bool ABaseWeaponActor::CanFire()
+void ABaseWeaponActor::OnPicked()
 {
-	return false;
+	OnItemPicked();
 }
 
+void ABaseWeaponActor::OnEquipped()
+{
+	OnItemEquipped();
+}
+
+void ABaseWeaponActor::OnDropped()
+{
+	OnItemDropped();
+}
+
+void ABaseWeaponActor::OnThrow()
+{
+	OnItemThrown();
+}
