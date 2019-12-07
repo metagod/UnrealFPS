@@ -42,6 +42,7 @@ class AFPSCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMotionControllerComponent* L_MotionController;
 
+	bool bIsInteracting;
 
 	class APlayerController* PlayerController;
 
@@ -87,21 +88,25 @@ public:
 
 protected:
 	
-	UFUNCTION(BlueprintCallable, Category = "Fire")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OnWeaponPick();
 
 	/** Fires a projectile. */
-	UFUNCTION(BlueprintCallable, Category = "Fire")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OnFirePressed();
 
-	UFUNCTION(BlueprintCallable, Category = "Fire")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OnFireReleased();
 
-	UFUNCTION(BlueprintCallable, Category = "Fire")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OnSecondaryHold();
 
-	UFUNCTION(BlueprintCallable, Category = "Fire")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OnSecondaryRelease();
+
+	void OnInteractPressed();
+	void OnInteractReleased();
+
 	/** Resets HMD orientation and position in VR. */
 	void OnResetVR();
 
@@ -160,6 +165,7 @@ public:
 
 	FORCEINLINE class USceneComponent* GetMuzzleComponent() const { return FP_MuzzleLocation; }
 
-
+	UFUNCTION (BlueprintPure, Category = "Input")
+	bool GetInteractionState() { return bIsInteracting; }
 };
 

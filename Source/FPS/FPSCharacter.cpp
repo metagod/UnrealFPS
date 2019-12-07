@@ -141,6 +141,9 @@ void AFPSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 	PlayerInputComponent->BindAxis("TurnRate", this, &AFPSCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AFPSCharacter::LookUpAtRate);
+
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AFPSCharacter::OnInteractPressed);
+	PlayerInputComponent->BindAction("Interact", IE_Released, this, &AFPSCharacter::OnInteractReleased);
 }
 
 void AFPSCharacter::OnWeaponPick()
@@ -364,4 +367,15 @@ bool AFPSCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInput
 		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AFPSCharacter::TouchUpdate);
 	}
 	return bResult;
+}
+
+
+void AFPSCharacter::OnInteractPressed()
+{
+	bIsInteracting = true;
+}
+
+void AFPSCharacter::OnInteractReleased()
+{
+	bIsInteracting = false;
 }

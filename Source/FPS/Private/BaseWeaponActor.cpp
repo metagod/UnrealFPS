@@ -13,32 +13,45 @@ void ABaseWeaponActor::Init(AFPSCharacter * owner)
 	Super::Init(owner);
 }
 
-void ABaseWeaponActor::OnPrimaryUse()
+void ABaseWeaponActor::PrimaryUse()
 {
 	OnItemUsed();
 }
 
-void ABaseWeaponActor::OnSecondaryUse()
+void ABaseWeaponActor::SecondaryUse()
 {
 	OnItemUsedSecondary();
 }
 
-void ABaseWeaponActor::OnPicked()
+void ABaseWeaponActor::PickItem()
 {
+	SetActorHiddenInGame(true);
+
 	OnItemPicked();
 }
 
-void ABaseWeaponActor::OnEquipped()
+void ABaseWeaponActor::EquipItem()
 {
 	OnItemEquipped();
 }
 
-void ABaseWeaponActor::OnDropped()
+void ABaseWeaponActor::DropItem()
 {
 	OnItemDropped();
 }
 
-void ABaseWeaponActor::OnThrow()
+void ABaseWeaponActor::ThrowItem()
 {
 	OnItemThrown();
 }
+
+void ABaseWeaponActor::InteractItem(AFPSCharacter * newOwner)
+{
+	if (newOwner)
+	{
+		Init(newOwner);
+
+		OnItemInteracted();
+	}
+}
+

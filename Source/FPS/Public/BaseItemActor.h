@@ -23,36 +23,60 @@ protected:
 
 public:	
 
-	UFUNCTION (BlueprintCallable, Category = "Item")
+	UFUNCTION (BlueprintPure, Category = "Item")
 	FORCEINLINE class AFPSCharacter* GetItemOwner() { return MyOwner; }
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Init(class AFPSCharacter* owner);
+	virtual void Init(AFPSCharacter* owner);
 
-	virtual void OnPrimaryUse() PURE_VIRTUAL(ABaseItemActor::OnPrimaryUse, );
-	virtual void OnSecondaryUse() PURE_VIRTUAL(ABaseItemActor::OnSecondaryUse, );
-	virtual void OnPicked() PURE_VIRTUAL(ABaseItemActor::OnPicked, );
-	virtual void OnEquipped() PURE_VIRTUAL(ABaseItemActor::OnEquipped, );
-	virtual void OnDropped() PURE_VIRTUAL(ABaseItemActor::OnDropped, );
-	virtual void OnThrow() PURE_VIRTUAL(ABaseItemActor::OnThrow, );
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void PrimaryUse() PURE_VIRTUAL(ABaseItemActor::PrimaryUse, );
+	
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void SecondaryUse() PURE_VIRTUAL(ABaseItemActor::SecondaryUse, );
+	
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void PickItem() PURE_VIRTUAL(ABaseItemActor::PickItem, );
+	
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void EquipItem() PURE_VIRTUAL(ABaseItemActor::EquipItem, );
+	
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void DropItem() PURE_VIRTUAL(ABaseItemActor::DropItem, );
+	
+	UFUNCTION(BlueprintCallable, Category = "ItemBehaviour")
+	virtual void ThrowItem() PURE_VIRTUAL(ABaseItemActor::ThrowItem, );
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION (BlueprintCallable, Category = "ItemBehaviour")
+	virtual void InteractItem(AFPSCharacter* newOwner) PURE_VIRTUAL(ABaseItemActor::InteractItem, );
+
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
+	void OnItemInteracted();
+	virtual void OnItemInteracted_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemUsed();
+	virtual void OnItemUsed_Implementation();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemUsedSecondary();
+	virtual void OnItemUsedSecondary_Implementation();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemPicked();
+	virtual void OnItemPicked_Implementation();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemEquipped();
+	virtual void OnItemEquipped_Implementation();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemDropped();
+	virtual void OnItemDropped_Implementation();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "ItemState")
+	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemThrown();
+	virtual void OnItemThrown_Implementation();
 };

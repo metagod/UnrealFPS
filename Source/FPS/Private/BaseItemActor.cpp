@@ -31,3 +31,25 @@ void ABaseItemActor::Init(AFPSCharacter * owner)
 		MyOwner = owner;
 }
 
+void ABaseItemActor::OnItemInteracted_Implementation()
+{
+}
+
+void ABaseItemActor::OnItemUsed_Implementation()
+{}
+
+void ABaseItemActor::OnItemDropped_Implementation()
+{}
+
+void ABaseItemActor::OnItemEquipped_Implementation()
+{}
+
+void ABaseItemActor::OnItemPicked_Implementation()
+{}
+
+void ABaseItemActor::OnItemThrown_Implementation()
+{}
+
+void ABaseItemActor::OnItemUsedSecondary_Implementation()
+{}
+

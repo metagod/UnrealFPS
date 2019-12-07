@@ -20,10 +20,11 @@ public:
 
 	virtual void Init(class AFPSCharacter* owner) override;
 
-	virtual void OnPrimaryUse() override;
-	virtual void OnSecondaryUse() override;
-	virtual void OnPicked() override;
-	virtual void OnEquipped() override;
-	virtual void OnDropped() override;
-	virtual void OnThrow() override;
+	virtual void PrimaryUse() override;
+	virtual void SecondaryUse() override;
+	virtual void PickItem() override;
+	virtual void EquipItem() override;
+	virtual void DropItem() override;
+	virtual void ThrowItem() override;
+	virtual void InteractItem(AFPSCharacter* Owner) override;
 };
