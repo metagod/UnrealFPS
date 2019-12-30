@@ -47,6 +47,10 @@ class AFPSCharacter : public ACharacter
 	class APlayerController* PlayerController;
 
 	class UWeaponComponent* WeaponComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "Equipment")
+	class ABaseItemActor* EquippedItem;
+
 public:
 	AFPSCharacter();
 
@@ -167,5 +171,8 @@ public:
 
 	UFUNCTION (BlueprintPure, Category = "Input")
 	bool GetInteractionState() { return bIsInteracting; }
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void EquipThisItem(ABaseItemActor* item);
 };
 

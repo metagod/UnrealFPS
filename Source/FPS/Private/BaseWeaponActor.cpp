@@ -32,12 +32,18 @@ void ABaseWeaponActor::PickItem()
 
 void ABaseWeaponActor::EquipItem()
 {
+	if (MyOwner != nullptr)
+		MyOwner->EquipThisItem(this);
+
 	OnItemEquipped();
 }
 
 void ABaseWeaponActor::DropItem()
 {
 	OnItemDropped();
+
+	DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	
 }
 
 void ABaseWeaponActor::ThrowItem()

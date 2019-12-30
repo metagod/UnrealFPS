@@ -4,6 +4,7 @@
 #include "../Public/WeaponComponent.h"
 #include "FPSCharacter.h"
 #include "FPSProjectile.h"
+#include "BaseItemActor.h"
 #include "Animation/AnimInstance.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
@@ -173,49 +174,6 @@ void AFPSCharacter::OnFirePressed()
 			}
 		}
 	}
-
-	//// try and fire a projectile
-	//if (ProjectileClass != NULL)
-	//{
-	//	UWorld* const World = GetWorld();
-	//	if (World != NULL)
-	//	{
-	//		if (bUsingMotionControllers)
-	//		{
-	//			const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
-	//			const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
-	//			World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-	//		}
-	//		else
-	//		{
-	//			
-	//			else
-	//			{
-	//				const FRotator SpawnRotation = GetControlRotation();
-	//				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-	//				const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
-	//				//Set Spawn Collision Handling Override
-	//				FActorSpawnParameters ActorSpawnParams;
-	//				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-
-	//				// spawn the projectile at the muzzle
-	//				World->SpawnActor<AFPSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-	//			}
-	//		}
-	//		
-	//		
-	//	}
-	//	
-	//}
-
-	//// try and play the sound if specified
-	//if (FireSound != NULL)
-	//{
-	//	//UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	//}
-
-	
 }
 
 void AFPSCharacter::OnFireReleased()
@@ -286,44 +244,6 @@ void AFPSCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector 
 	TouchItem.bIsPressed = false;
 }
 
-//Commenting this section out to be consistent with FPS BP template.
-//This allows the user to turn without using the right virtual joystick
-
-//void AFPSCharacter::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
-//{
-//	if ((TouchItem.bIsPressed == true) && (TouchItem.FingerIndex == FingerIndex))
-//	{
-//		if (TouchItem.bIsPressed)
-//		{
-//			if (GetWorld() != nullptr)
-//			{
-//				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
-//				if (ViewportClient != nullptr)
-//				{
-//					FVector MoveDelta = Location - TouchItem.Location;
-//					FVector2D ScreenSize;
-//					ViewportClient->GetViewportSize(ScreenSize);
-//					FVector2D ScaledDelta = FVector2D(MoveDelta.X, MoveDelta.Y) / ScreenSize;
-//					if (FMath::Abs(ScaledDelta.X) >= 4.0 / ScreenSize.X)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.X * BaseTurnRate;
-//						AddControllerYawInput(Value);
-//					}
-//					if (FMath::Abs(ScaledDelta.Y) >= 4.0 / ScreenSize.Y)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.Y * BaseTurnRate;
-//						AddControllerPitchInput(Value);
-//					}
-//					TouchItem.Location = Location;
-//				}
-//				TouchItem.Location = Location;
-//			}
-//		}
-//	}
-//}
-
 void AFPSCharacter::MoveForward(float Value)
 {
 	if (Value != 0.0f)
@@ -367,6 +287,20 @@ bool AFPSCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInput
 		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AFPSCharacter::TouchUpdate);
 	}
 	return bResult;
+}
+
+void AFPSCharacter::EquipThisItem(ABaseItemActor * item)
+{
+	if (EquippedItem != nullptr)
+	{
+		EquippedItem->DropItem();
+	}
+
+	EquippedItem = item;
+	EquippedItem->AttachToComponent(RootComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+	EquippedItem->DisableComponentsSimulatePhysics();
+	EquippedItem->SetActorRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	EquippedItem->SetActorRelativeLocation(FVector(0.000004, 53.999992, 10.000000));
 }
 
 

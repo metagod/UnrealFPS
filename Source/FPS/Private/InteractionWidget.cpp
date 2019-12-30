@@ -56,9 +56,12 @@ void UInteractionWidget::SetInputKeyState(bool state)
 
 void UInteractionWidget::InteractionComplete()
 {
-	
 	OnInteractionComplete();
 
-	ToggleActive();
+	SetVisibility(false);
+
+	TargetInteractor = nullptr;
+
+	SetComponentTickEnabled(false);
 }
 
