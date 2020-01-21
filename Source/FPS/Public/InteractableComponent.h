@@ -27,7 +27,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableItem")
 	class UWidget* PickWidget;
-
+	
 	// Called when the game starts
 	virtual void BeginPlay() override;
 

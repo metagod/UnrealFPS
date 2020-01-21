@@ -8,6 +8,7 @@ UInteractionWidget::UInteractionWidget()
 {
 	bIsInputKeyPressed = false;
 	bRotateToPlayer = true;
+	bCanShowPrompt = true;
 }
 
 void UInteractionWidget::BeginPlay()
@@ -26,12 +27,11 @@ void UInteractionWidget::TickComponent(float DeltaTime, enum ELevelTick TickType
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (TargetInteractor != nullptr)
+	if (TargetInteractor != nullptr && bCanShowPrompt)
 	{
 		if (FVector::DistSquared(GetOwner()->GetActorLocation(), TargetInteractor->GetActorLocation()) < DistanceToActivate)
 		{
 			SetVisibility(true);
-
 		}
 		else
 		{
@@ -58,10 +58,11 @@ void UInteractionWidget::InteractionComplete()
 {
 	OnInteractionComplete();
 
-	SetVisibility(false);
-
-	TargetInteractor = nullptr;
+	bCanShowPrompt = false;
 
 	SetComponentTickEnabled(false);
+
+	SetVisibility(false);
 }
+
 

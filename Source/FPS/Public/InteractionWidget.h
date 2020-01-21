@@ -17,7 +17,12 @@ class FPS_API UInteractionWidget : public UWidgetComponent
 	bool bIsInputKeyPressed;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	bool bRotateToPlayer;
+	uint8 bRotateToPlayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InteractableItem")
+	uint8 bCanShowPrompt;
+
+
 public:
 	
 	UInteractionWidget();
@@ -50,5 +55,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void InteractionComplete();
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Interaction")
+	void ResetWidget();
 
 };
