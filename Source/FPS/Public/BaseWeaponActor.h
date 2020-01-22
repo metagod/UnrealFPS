@@ -13,8 +13,9 @@ UCLASS()
 class FPS_API ABaseWeaponActor : public ABaseItemActor
 {
 	GENERATED_BODY()
+protected:
+	class UWeaponComponent* WeaponComponent;
 public:
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -27,4 +28,6 @@ public:
 	virtual void DropItem() override;
 	virtual void ThrowItem() override;
 	virtual void InteractItem(AFPSCharacter* Owner) override;
+
+	FVector GetMuzzleLocation();
 };

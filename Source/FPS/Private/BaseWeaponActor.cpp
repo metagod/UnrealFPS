@@ -2,6 +2,9 @@
 
 #include "FPS.h"
 #include "BaseWeaponActor.h"
+#include "WeaponComponent.h"
+
+
 
 void ABaseWeaponActor:: Tick (float DeltaTime)
 {
@@ -11,15 +14,24 @@ void ABaseWeaponActor:: Tick (float DeltaTime)
 void ABaseWeaponActor::Init(AFPSCharacter * owner)
 {
 	Super::Init(owner);
+
+	if (WeaponComponent == nullptr)
+	{
+		WeaponComponent = this->FindComponentByClass<UWeaponComponent>();
+	}
+
+	WeaponComponent->Init(owner);
 }
 
 void ABaseWeaponActor::PrimaryUse()
 {
+	WeaponComponent->FirePrimaryPressed();
 	OnItemUsed();
 }
 
 void ABaseWeaponActor::SecondaryUse()
 {
+	WeaponComponent->FireSecondaryPressed();
 	OnItemUsedSecondary();
 }
 
@@ -59,5 +71,10 @@ void ABaseWeaponActor::InteractItem(AFPSCharacter * newOwner)
 
 		OnItemInteracted();
 	}
+}
+
+FVector ABaseWeaponActor::GetMuzzleLocation()
+{
+	return GetActorLocation() + FVector(0, 0, 3);
 }
 

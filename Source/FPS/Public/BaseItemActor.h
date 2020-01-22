@@ -21,6 +21,9 @@ protected:
 
 	class AFPSCharacter* MyOwner;
 
+	UPROPERTY (EditAnywhere, BlueprintReadOnly, Category = "Item")
+	FRotator RelativeRoationOnEquip;
+
 public:	
 
 	UFUNCTION (BlueprintPure, Category = "Item")
@@ -79,4 +82,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "ItemState")
 	void OnItemThrown();
 	virtual void OnItemThrown_Implementation();
+
+	UFUNCTION (BlueprintPure, Category = "Item")
+	FORCEINLINE FRotator GetRelativeRotation() const { return RelativeRoationOnEquip; }
 };

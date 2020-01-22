@@ -49,17 +49,16 @@ void UWeaponComponent::Init(AFPSCharacter* _ref)
 
 		ChangeWeaponState(EWeaponStates::READY);
 		
-		ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
-		
-		if (ammoPool != nullptr)
+		if (ammoPool == nullptr)
 		{
+			ammoPool = GetOwner()->FindComponentByClass<UPoolObjectComponent>();
+
 			if (PrimaryWeaponDataRef != NULL)
 				ammoPool->CreateComplexPool(PrimaryWeaponDataRef.GetDefaultObject()->ProjectileClass, PrimaryWeaponDataRef.GetDefaultObject()->ClipSize);
 			if (SecondaryWeaponDataRef != NULL)
 				ammoPool->CreateComplexPool(SecondaryWeaponDataRef.GetDefaultObject()->ProjectileClass, SecondaryWeaponDataRef.GetDefaultObject()->ClipSize);
 		}
 		
-		FP_MuzzleLocation = MyCharacter->GetMuzzleComponent();
 		ChangeWeaponMode(eWeaponMode::PRIMARY);
 		AmmoRemaining = ActiveWeapon->ClipSize;
 	}
@@ -79,6 +78,8 @@ void UWeaponComponent::OnFire()
 		return;
 
 	UE_LOG(LogTemp, Warning, TEXT("Firing"));
+
+	FP_MuzzleLocation = GetOwner()->GetActorLocation() + FVector(2, 0, 0);
 
 	ChangeWeaponState(EWeaponStates::FIRING);
 
@@ -129,8 +130,7 @@ void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 
 	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
 	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-	const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-
+	
 	AFPSProjectile* _spawndProj = ammoPool->GetPoolObjectOfType(projectileType);
 	if (_spawndProj != nullptr)
 	{	
@@ -139,7 +139,7 @@ void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 
 		_spawndProj->SetMaxSpeed(ActiveWeapon->ProjectileSpeed);
 		_spawndProj->SetInitialSpeed(ActiveWeapon->ProjectileSpeed);
-		_spawndProj->SetActorLocation(SpawnLocation);
+		_spawndProj->SetActorLocation(FP_MuzzleLocation);
 		_spawndProj->SetActorRotation(SpawnRotation);
 		_spawndProj->SetInactiveTimer(ActiveWeapon->projectileLifeSpan);
 		_spawndProj->SetActive(true);
@@ -167,15 +167,14 @@ void UWeaponComponent::SpawnHitScan()
 		const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(0, _randomFloat, _randomFloat);
 		const FVector SpawnDirection = SpawnRotation.Vector();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-		const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : MyCharacter->GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
-	
-		const FVector SpawnRange = SpawnLocation + SpawnDirection * ActiveWeapon->HitScanRange;
+		
+		const FVector SpawnRange = FP_MuzzleLocation + SpawnDirection * ActiveWeapon->HitScanRange;
 		FCollisionQueryParams TraceParams(FName(TEXT("WeaponTrace")), true, MyCharacter);
 		TraceParams.bReturnPhysicalMaterial = true;
 		//TraceParams.bTraceAsyncScene = true;
 		FHitResult _out (ForceInit);
 		
-		World->LineTraceSingleByChannel(_out, SpawnLocation, SpawnRange, ECollisionChannel::ECC_WorldDynamic, TraceParams);
+		World->LineTraceSingleByChannel(_out, FP_MuzzleLocation, SpawnRange, ECollisionChannel::ECC_WorldDynamic, TraceParams);
 
 		if (NULL != _out.GetActor())
 		{
@@ -209,6 +208,9 @@ bool UWeaponComponent::CanFire()
 
 void UWeaponComponent::SetSecondaryProperties_Implementation()
 {
+	if (SecondaryWeaponDataRef == nullptr)
+		return;
+
 	MyCharacter->GetFirstPersonCameraComponent()->FieldOfView += SecondaryWeaponDataRef.GetDefaultObject()->FOVChange;
 	MyCharacter->Recoil = SecondaryWeaponDataRef.GetDefaultObject()->Recoil;
 	ActiveWeapon = SecondaryWeaponDataRef.GetDefaultObject();
@@ -224,13 +226,13 @@ void UWeaponComponent::SetPrimaryProperties_Implementation()
 #pragma region Listeners
 void UWeaponComponent::FirePrimaryPressed()
 {
-	bIsPrimaryKeyDown = true;
+	OnFire();
 }
 
 void UWeaponComponent::FireSecondaryPressed()
 {
 	ChangeWeaponMode(eWeaponMode::SECONDARY);
-	bIsSecondaryKeyDown = true;
+	OnFire();
 }
 
 void UWeaponComponent::OnPrimaryRelease()

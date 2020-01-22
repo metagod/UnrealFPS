@@ -46,8 +46,6 @@ class AFPSCharacter : public ACharacter
 
 	class APlayerController* PlayerController;
 
-	class UWeaponComponent* WeaponComponent;
-
 	UPROPERTY(VisibleAnywhere, Category = "Equipment")
 	class ABaseItemActor* EquippedItem;
 

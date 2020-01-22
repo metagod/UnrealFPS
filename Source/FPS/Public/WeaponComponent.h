@@ -43,7 +43,7 @@ public:
 	void Reload();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USceneComponent* FP_MuzzleLocation;
+	FVector FP_MuzzleLocation;
 
 	/*Wepaon Data to modify the behaviour*/
 	UPROPERTY(EditAnywhere, Category = Weapon)
