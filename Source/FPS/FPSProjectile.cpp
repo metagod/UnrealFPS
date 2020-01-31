@@ -32,10 +32,18 @@ AFPSProjectile::AFPSProjectile()
 
 void AFPSProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	if (KillOnTouch && (OtherActor != NULL && OtherActor->GetName().Contains("Floor")))
+	{
+		SetActive(false);
+		return;
+	}
+
 	// Only add impulse and destroy projectile if we hit a physics
 	if ((OtherActor != NULL) && (OtherActor != this) && (OtherComp != NULL) && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * ImpactForce, GetActorLocation());
+
+		OnImpactEvent();
 
 		bool bIsImplemented = OtherActor->GetClass()->ImplementsInterface(UDamageReceiverInterface::StaticClass()); // bIsImplemented will be true if OriginalObject implements UReactToTriggerInterface.
 		if (bIsImplemented)
@@ -99,6 +107,7 @@ void AFPSProjectile::OnFire()
 	if (isActive && ProjectileMovement->IsActive())
 	{
 		ProjectileMovement->Velocity = this->GetActorForwardVector() * ProjectileMovement->InitialSpeed;
+		PostFireEvent();
 	}
 }
 

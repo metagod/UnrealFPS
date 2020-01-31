@@ -33,6 +33,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
 	float ImpactForce;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
+	bool KillOnTouch;
 
 	/** Returns CollisionComp subobject **/
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
@@ -48,5 +50,12 @@ public:
 	void SetInactiveTimer(float time);
 	void OnTimerOver();
 	void OnFire();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
+	void PostFireEvent();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Projectile")
+	void OnImpactEvent();
+
 };
 

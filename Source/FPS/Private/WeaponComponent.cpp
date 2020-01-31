@@ -128,13 +128,14 @@ void UWeaponComponent::SpawnFromPool(TSubclassOf<AFPSProjectile> projectileType)
 	float _randomFloatX = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, ActiveWeapon->Spread);
 	float _randomFloatY = FMath::FRandRange(-PrimaryWeaponDataRef.GetDefaultObject()->Spread, ActiveWeapon->Spread);
 
-	const FRotator SpawnRotation = MyCharacter->GetControlRotation().Add(_randomFloatX, _randomFloatY, 0);
+	const FRotator SpawnRotation = MyCharacter->GetControlRotation();// .Add(_randomFloatX, _randomFloatY, 0);
 	// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 	
 	AFPSProjectile* _spawndProj = ammoPool->GetPoolObjectOfType(projectileType);
 	if (_spawndProj != nullptr)
 	{	
 		_spawndProj->GetCollisionComp()->IgnoreActorWhenMoving(MyCharacter, true);
+		_spawndProj->GetCollisionComp()->IgnoreActorWhenMoving(GetOwner(), true);
 		MyCharacter->MoveIgnoreActorAdd(_spawndProj);
 
 		_spawndProj->SetMaxSpeed(ActiveWeapon->ProjectileSpeed);
